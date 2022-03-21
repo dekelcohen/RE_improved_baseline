@@ -6,7 +6,7 @@ class NYTProcessor(Processor):
         super().__init__(args, tokenizer)
         
     def label2Id(self,label, data):
-        return data['relationId']
+        return data['relation_id']
     
     def read_all(self,train_file,dev_file,test_file):
         
@@ -14,8 +14,11 @@ class NYTProcessor(Processor):
             pass
             
         nyt_args = ArgsClass()
+        # train_file = r'../Datasets/New York Times Relation Extraction/train.json'
+        # dev_file = r'../Datasets/New York Times Relation Extraction/valid.json'
         nyt_args.train_data = train_file
         nyt_args.test_data = dev_file
+        nyt_args.filter_nyt = 0
         
         df_train, df_test = create_nyt_tokens_format(nyt_args)
         train_features = self.features_from_data(df_train['data'])

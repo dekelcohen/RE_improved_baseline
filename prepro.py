@@ -160,7 +160,7 @@ class Processor:
             tokens = [convert_token(token) for token in tokens]
 
             input_ids, new_ss, new_os = self.tokenize(tokens, d['subj_type'], d['obj_type'], ss, se, os, oe)
-            rel = self.label2Id(d)
+            rel = self.label2Id(d['relation'],d)
 
             feature = {
                 'input_ids': input_ids,

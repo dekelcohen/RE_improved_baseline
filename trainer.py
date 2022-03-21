@@ -51,16 +51,16 @@ class Trainer:
                     scaler.update()
                     scheduler.step()
                     model.zero_grad()
-                    wandb.log({'loss': loss.item()}, step=num_steps)
+                    #wandb.log({'loss': loss.item()}, step=num_steps)
     
                 if (num_steps % args.evaluation_steps == 0 and step % args.gradient_accumulation_steps == 0):
                     for tag, features in benchmarks:
                         f1, output = self.evaluate(args, model, features, tag=tag)
-                        wandb.log(output, step=num_steps)
+                        #wandb.log(output, step=num_steps)
     
         for tag, features in benchmarks:
             f1, output = self.evaluate(args, model, features, tag=tag)
-            wandb.log(output, step=num_steps)
+            #wandb.log(output, step=num_steps)
     
     
     def evaluate(self,args, model, features, tag='dev'):
@@ -140,7 +140,7 @@ class Trainer:
     
         args = parser.parse_args()
                 
-        wandb.init(project=args.project_name, name=args.run_name)
+        #wandb.init(project=args.project_name, name=args.run_name)
     
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         args.n_gpu = torch.cuda.device_count()
@@ -158,7 +158,7 @@ class Trainer:
         )
     
         model = REModel(args, config)
-        model.to(0)
+        model.to(device)
     
         
         train_file = args.train_file if args.train_file is not None else os.path.join(args.data_dir, "train.json")
