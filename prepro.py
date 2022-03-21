@@ -128,6 +128,58 @@ class Processor:
         input_ids = self.tokenizer.convert_tokens_to_ids(sents)
         input_ids = self.tokenizer.build_inputs_with_special_tokens(input_ids)
         return input_ids, new_ss + 1, new_os + 1
+    def label2Id(self, label=None, data=None):
+        """
+        Defines the interface (abstract) of translating from label to a class index
+        a) using a dict/mapping - self.LABEL_2_IDX.get(label)
+        b) From the data sample (d['relationId'])
+        
+        Returns
+        -------
+        0 based class index
+
+        """
+        pass
+    
+    def features_from_data(self, data):
+        """
+        Iterate data - array of dicts with tokens and entities: start/end positions, types
+        
+        Returns
+        -------
+        array of transformer features.
+
+        """
+        features = []
+        
+        for d in tqdm(data):
+            ss, se = d['subj_start'], d['subj_end']
+            os, oe = d['obj_start'], d['obj_end']
+
+            tokens = d['token']
+            tokens = [convert_token(token) for token in tokens]
+
+            input_ids, new_ss, new_os = self.tokenize(tokens, d['subj_type'], d['obj_type'], ss, se, os, oe)
+            rel = self.label2Id(d)
+
+            feature = {
+                'input_ids': input_ids,
+                'labels': rel,
+                'ss': new_ss,
+                'os': new_os,
+            }
+
+            features.append(feature)
+            
+    def read_all(self,train_file,dev_file,test_file):
+        train_features = self.read(train_file)
+        dev_features = None
+        if dev_file:
+            dev_features = self.read(dev_file)
+        test_features = None
+        if test_file:
+            test_features = self.read(test_file)
+        return  train_features,dev_features,test_features
 
 
 class TACREDProcessor(Processor):
@@ -190,3 +242,16 @@ class RETACREDProcessor(Processor):
 
             features.append(feature)
         return features
+
+class GenericProcessor(Processor):
+    def __init__(self, args, tokenizer):
+        super().__init__(args, tokenizer)
+        
+    def label2Id(self,label, data):
+        return data['relationId']
+    
+    def read(self, file_in):        
+        with open(file_in, "r") as fh:
+            data = json.load(fh)
+            
+        return self.features_from_data(data)
