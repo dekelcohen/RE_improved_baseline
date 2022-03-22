@@ -170,6 +170,7 @@ class Processor:
             }
 
             features.append(feature)
+        return features
             
     def read_all(self,train_file,dev_file,test_file):
         train_features = self.read(train_file)
