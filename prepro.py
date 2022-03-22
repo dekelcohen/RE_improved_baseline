@@ -128,6 +128,10 @@ class Processor:
         input_ids = self.tokenizer.convert_tokens_to_ids(sents)
         input_ids = self.tokenizer.build_inputs_with_special_tokens(input_ids)
         return input_ids, new_ss + 1, new_os + 1
+    
+    def get_labels(self):
+        return list(self.LABEL_TO_ID.keys())
+    
     def label2Id(self, label=None, data=None):
         """
         Defines the interface (abstract) of translating from label to a class index

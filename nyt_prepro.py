@@ -8,6 +8,9 @@ class NYTProcessor(Processor):
     def label2Id(self,label, data):
         return data['relation_id']
     
+    def get_labels(self):
+        return self.rm.get_classes()
+    
     def read_all(self,train_file,dev_file,test_file):
         
         class ArgsClass:
@@ -20,9 +23,10 @@ class NYTProcessor(Processor):
         nyt_args.test_data = dev_file
         nyt_args.filter_nyt = 1000
         
-        df_train, df_test = create_nyt_tokens_format(nyt_args)
+        df_train, df_test, rm = create_nyt_tokens_format(nyt_args)
+        self.rm = rm
         train_features = self.features_from_data(df_train['data'])
         dev_features = self.features_from_data(df_test['data'])
-                
+        
         return train_features,dev_features,None
 

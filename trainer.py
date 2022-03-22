@@ -2,19 +2,25 @@ import argparse
 import os
 
 import numpy as np
+from pathlib import Path
 import torch
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from transformers import AutoConfig, AutoTokenizer
-from transformers.optimization import AdamW, get_linear_schedule_with_warmup
+from transformers.optimization import get_linear_schedule_with_warmup
+from  torch.optim import AdamW
 from utils import set_seed, collate_fn
 from prepro import GenericProcessor,RETACREDProcessor
 from nyt_prepro import NYTProcessor # Special NYT processor - TODO: import and instantiate using a string from --prepro
 from evaluation import get_f1
 from model import REModel
 from torch.cuda.amp import GradScaler
+import matplotlib.pyplot as plt
+from sklearn.metrics import precision_score, recall_score, f1_score, classification_report, ConfusionMatrixDisplay
+
 import wandb
 
+DATA_DIR = './data'
 
 class Trainer:
     def train(self,args, model, train_features, benchmarks):
@@ -80,14 +86,20 @@ class Trainer:
                 pred = torch.argmax(logit, dim=-1)
             preds += pred.tolist()
     
-        keys = np.array(keys, dtype=np.int64)
+        true_labels = np.array(keys, dtype=np.int64)
         preds = np.array(preds, dtype=np.int64)
-        _, _, max_f1 = get_f1(keys, preds)
+        _, _, max_f1 = get_f1(true_labels, preds)
     
         output = {
             tag + "_f1": max_f1 * 100,
         }
         print(output)
+        inc_labels = sorted(list(set(true_labels)))
+        target_names = [self.processor.get_labels()[i] for i in inc_labels]
+        print("classification report\n%s", classification_report(true_labels, preds,labels = inc_labels, target_names=target_names))
+        ConfusionMatrixDisplay.from_predictions(true_labels, preds,labels = inc_labels, display_labels=target_names)
+        plt.savefig(os.path.join("./data/" ,"test_confusion_matrix.png"))
+    
         return max_f1, output
     
     
@@ -138,10 +150,10 @@ class Trainer:
         parser.add_argument("--project_name", type=str, default="RE_baseline")
         parser.add_argument("--run_name", type=str, default="re-tacred")
     
-        args = parser.parse_args()
-                
+        args = parser.parse_args()        
         #wandb.init(project=args.project_name, name=args.run_name)
     
+        Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         args.n_gpu = torch.cuda.device_count()
         args.device = device
@@ -169,21 +181,21 @@ class Trainer:
         
          
     
-        processor = None
+        self.processor = None
         if (args.prepro == 'gen'):
-            processor = GenericProcessor(args, tokenizer)
+            self.processor = GenericProcessor(args, tokenizer)
         elif (args.prepro == 'nyt'):
-            processor = NYTProcessor(args, tokenizer)
+            self.processor = NYTProcessor(args, tokenizer)
         elif (args.prepro == 'retacred'):
-            processor = RETACREDProcessor(args, tokenizer)
+            self.processor = RETACREDProcessor(args, tokenizer)
         else:
             raise Exception(f"--prepro not found - default is {parser.get_default('prepro')}")
         
-        train_features,dev_features,test_features = processor.read_all(train_file,dev_file,test_file)
+        train_features,dev_features,test_features = self.processor.read_all(train_file,dev_file,test_file)
         
         
     
-        if len(processor.new_tokens) > 0:
+        if len(self.processor.new_tokens) > 0:
             model.encoder.resize_token_embeddings(len(tokenizer))
     
         benchmarks = []
