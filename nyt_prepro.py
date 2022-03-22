@@ -18,7 +18,7 @@ class NYTProcessor(Processor):
         # dev_file = r'../Datasets/New York Times Relation Extraction/valid.json'
         nyt_args.train_data = train_file
         nyt_args.test_data = dev_file
-        nyt_args.filter_nyt = 0
+        nyt_args.filter_nyt = 1000
         
         df_train, df_test = create_nyt_tokens_format(nyt_args)
         train_features = self.features_from_data(df_train['data'])

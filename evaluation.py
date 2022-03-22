@@ -2,6 +2,8 @@ import numpy as np
 
 
 def get_f1(key, prediction):
+    print(f'key={key}\nprediction={prediction}'[:50]) # TODO:Debug:Remove
+    
     correct_by_relation = ((key == prediction) & (prediction != 0)).astype(np.int32).sum()
     guessed_by_relation = (prediction != 0).astype(np.int32).sum()
     gold_by_relation = (key != 0).astype(np.int32).sum()
