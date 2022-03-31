@@ -186,6 +186,9 @@ class Trainer:
             self.processor = GenericProcessor(args, tokenizer)
         elif (args.prepro == 'nyt'):
             self.processor = NYTProcessor(args, tokenizer)
+        elif (args.prepro == 'nyt_tr'):
+            args.translated = True
+            self.processor = NYTProcessor(args, tokenizer)
         elif (args.prepro == 'retacred'):
             self.processor = RETACREDProcessor(args, tokenizer)
         else:
